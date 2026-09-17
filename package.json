@@ -21,7 +21,8 @@
   "homepage": "https://github.com/Viniciusdelmo/redis-cache#readme",
   "dependencies": {
     "fastify": "^5.12.5",
-    "mongodb": "^7.6.0"
+    "mongodb": "^7.6.0",
+    "redis": "^6.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.3",

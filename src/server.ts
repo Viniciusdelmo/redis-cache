@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { connectDb } from "./db";
+import { connectRedis } from "./redis";
 import { productsRoutes } from "./routes/products";
 
 const app = Fastify({
@@ -15,6 +16,7 @@ app.get("/health", async () => {
 const start = async () => {
   try {
     await connectDb();
+    await connectRedis();
     await app.register(productsRoutes);
 
     await app.listen({
