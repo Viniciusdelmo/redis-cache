@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { ObjectId } from "mongodb";
 import { getRedis } from "../redis";
 import { getProductsCollection } from "../db";
+import { getCacheStats, recordHit, recordMiss } from "../cacheStats";
 
 const DB_DELAY_MS = 3000;
 
@@ -35,11 +36,11 @@ export async function productsRoutes(app: FastifyInstance) {
         const cachedProduct = await redis.get(cacheKey);
 
         if (cachedProduct) {
+            recordHit(); 
             return JSON.parse(cachedProduct);
         }
 
-        console.log("cachedProduct", cachedProduct);
-
+        recordMiss();
         await simulateDbDelay();
 
         const product = await products().findOne({ _id: new ObjectId(id) });
@@ -50,6 +51,10 @@ export async function productsRoutes(app: FastifyInstance) {
 
         await redis.set(cacheKey, JSON.stringify(product), { EX: 60 });
         return product;
+    });
+
+    app.get("/cache-stats", async () => {
+        return getCacheStats();
     });
 
     app.post<{ Body: ProductBody }>("/products", async (request, reply) => {
@@ -79,6 +84,8 @@ export async function productsRoutes(app: FastifyInstance) {
             return reply.status(400).send({ error: "Invalid product id" });
         }
 
+        const redis = getRedis();
+
         if (typeof name !== "string" || typeof price !== "number") {
             return reply.status(400).send({ error: "Body must include name (string) and price (number)" });
         }
@@ -93,6 +100,8 @@ export async function productsRoutes(app: FastifyInstance) {
             return reply.status(404).send({ error: "Product not found" });
         }
 
+        await redis.del(`product:${id}`);
+
         return result;
     });
 
@@ -103,11 +112,15 @@ export async function productsRoutes(app: FastifyInstance) {
             return reply.status(400).send({ error: "Invalid product id" });
         }
 
+        const redis = getRedis();
+
         const result = await products().deleteOne({ _id: new ObjectId(id) });
 
         if (result.deletedCount === 0) {
             return reply.status(404).send({ error: "Product not found" });
         }
+
+        await redis.del(`product:${id}`);
 
         return reply.status(204).send();
     });
