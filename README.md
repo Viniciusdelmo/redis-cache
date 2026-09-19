@@ -16,8 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://redis.io/"><strong>redis.io</strong></a> · Official website & documentation
+ <img src="https://github.com/Viniciusdelmo/redis-cache/actions/workflows/ci.yml/badge.svg" alt="CI Status"/>
 </p>
+
 
 ## Goal
 
