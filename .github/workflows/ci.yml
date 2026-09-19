@@ -17,3 +17,18 @@ jobs:
           node-version: "22"
       - run: npm ci
       - run: npx tsc --noEmit
+  deploy:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ github.sha }}
+          path: |
+            src
+            package.json
+            package-lock.json
+            docker-compose.yml
